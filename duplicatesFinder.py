@@ -32,7 +32,7 @@ def GetHashofFilesInDir(directory, verbose=0):
 					if not buf:
 						break
 					fileHash.update(buf)
-					hashTable = AddDictElem([fileHash, filepath], hashTable)
+					hashTable = AddDictElem([fileHash.hexdigest(), filepath], hashTable)
 				file.close()
 
 	except:
