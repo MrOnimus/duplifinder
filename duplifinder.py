@@ -17,7 +17,7 @@ def addDictElem(arr, dictionary):
 def getHashofFilesInDir(directory, verbose=0):
     hashTable = {}
 
-    if not os.path.exists (directory):
+    if not os.path.exists(directory):
         return -1
 
     try:
@@ -25,7 +25,7 @@ def getHashofFilesInDir(directory, verbose=0):
             for names in files:
                 if verbose == 1:
                     print('Hashing', names)
-                filepath = os.path.join(root,names)
+                filepath = os.path.join(root, names)
                 try:
                     file = open(filepath, 'rb')
                 except:
@@ -39,7 +39,8 @@ def getHashofFilesInDir(directory, verbose=0):
                     if not buf:
                         break
                     fileHash.update(buf)
-                    hashTable = addDictElem([fileHash.hexdigest(), filepath], hashTable)
+                    hashTable = addDictElem(
+                        [fileHash.hexdigest(), filepath], hashTable)
                 file.close()
 
     except:
@@ -49,8 +50,10 @@ def getHashofFilesInDir(directory, verbose=0):
 
     return hashTable
 
+
 def displayUsage():
     print('usage: duplifinder <path to directory>')
+
 
 def displayResult(dictionary):
     print('You have duplicates here:')
@@ -58,10 +61,10 @@ def displayResult(dictionary):
         if len(dictionary[key]) > 1:
             print(dictionary[key])
 
+
 if __name__ == "__main__":
     if len(sys.argv[1:]) > 0:
         result = getHashofFilesInDir('.', 0)
         displayResult(result)
     else:
         displayUsage()
-
