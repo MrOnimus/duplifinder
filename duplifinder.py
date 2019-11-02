@@ -14,7 +14,8 @@ def addDictElem(arr, dictionary):
     return dictionary
 
 
-def getHashofFilesInDir(directory, verbose=0):
+def getHashofFilesInDir(argv, verbose=0):
+    directory = str(argv[0])
     hashTable = {}
 
     if not os.path.exists(directory):
@@ -63,8 +64,9 @@ def displayResult(dictionary):
 
 
 if __name__ == "__main__":
-    if len(sys.argv[1:]) > 0:
-        result = getHashofFilesInDir('.', 0)
+    args = sys.argv[1:]
+    if len(args) > 0:
+        result = getHashofFilesInDir(args, 0)
         displayResult(result)
     else:
         displayUsage()
