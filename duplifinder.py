@@ -1,6 +1,6 @@
-import hashlib, os
+import hashlib, os, sys
 
-def AddDictElem(arr, dictionary):
+def addDictElem(arr, dictionary):
 	if arr[0] in dictionary:
 		dictionary[arr[0]].append(arr[1])
 	else:
@@ -8,7 +8,7 @@ def AddDictElem(arr, dictionary):
 		dictionary[arr[0]].append(arr[1])
 	return dictionary
 
-def GetHashofFilesInDir(directory, verbose=0):
+def getHashofFilesInDir(directory, verbose=0):
 	hashTable = {}
 	if not os.path.exists (directory):
 		return -1
@@ -32,7 +32,7 @@ def GetHashofFilesInDir(directory, verbose=0):
 					if not buf:
 						break
 					fileHash.update(buf)
-					hashTable = AddDictElem([fileHash.hexdigest(), filepath], hashTable)
+					hashTable = addDictElem([fileHash.hexdigest(), filepath], hashTable)
 				file.close()
 
 	except:
@@ -43,6 +43,14 @@ def GetHashofFilesInDir(directory, verbose=0):
 
 	return hashTable
 
+def displayUsage():
+	print('usage: duplifinder <path to directory>')
 
-result = GetHashofFilesInDir('.', 1)
+if __name__ == "__main__":
+	if len(sys.argv[1:]) == 1:
+		getHashofFilesInDir('.', 1)
+	else:
+		displayUsage
+
+result = getHashofFilesInDir('.', 1)
 print(result)
