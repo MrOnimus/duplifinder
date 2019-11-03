@@ -3,6 +3,7 @@ import os
 import sys
 import traceback
 import platform
+from datetime import datetime
 
 
 def add_elem_to_dict(arr, dictionary):
@@ -54,7 +55,11 @@ def get_hash_of_files_in_dir(argv, verbose=0):
     return hash_table
 
 
-def creation_date(path_to_file):
+def get_readable_datetime(unixtime):
+    return datetime.utcfromtimestamp(unixtime).strftime('%Y-%m-%d %H:%M:%S')
+
+
+def modification_date(path_to_file):
     if platform.system() == 'Windows':
         return os.path.getmtime(path_to_file)
     else:
@@ -72,7 +77,13 @@ def display_result(dictionary):
         if len(dictionary[key]) > 1:
             print('This files are duplicates:')
             for i, dup_elem in enumerate(dictionary[key]):
-                print('  ' + str(i + 1) + '. ' + dup_elem)
+                print('  ' + str(i + 1) + '. ' + dup_elem + '  [ Date: ' +
+                        str(
+                            get_readable_datetime(
+                                modification_date(dup_elem)
+                                )
+                            )
+                        + ' ]')
             print('')
 
 
