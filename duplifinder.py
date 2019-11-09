@@ -43,6 +43,23 @@ class Colors:
         lightgrey = '\033[47m'
 
 
+symbols = ('B', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
+
+def bytes_to_human(n):
+    n = int(n)
+    format = '%(value).1f%(symbol)s'
+    if n < 0:
+        raise ValueError("n < 0")
+    prefix = {}
+    for i, s in enumerate(symbols[1:]):
+        prefix[s] = 1 << (i+1)*10
+    for symbol in reversed(symbols[1:]):
+        if n >= prefix[symbol]:
+            value = float(n) / prefix[symbol]
+            return format % dict(symbol=symbol, value=value)
+    return format % dict(symbol=symbols[0], value=n)
+
+
 def color_print(some_string, color):
     if color == 'red':
         return Colors.fg.red + some_string + Colors.reset
@@ -60,6 +77,8 @@ def color_print(some_string, color):
 
 def color_chooser(list_of_duplicates, elem):
     datetime = get_readable_datetime(elem['unixtime'])
+    if get_min_unixtime(list_of_duplicates, elem) == get_max_unixtime(list_of_duplicates, elem):
+        return datetime
     if get_min_unixtime(list_of_duplicates, elem) == elem['unixtime']:
         return color_print(datetime, 'red')
     elif get_max_unixtime(list_of_duplicates, elem) == elem['unixtime']:
@@ -172,7 +191,7 @@ def get_max_path_len(list_of_duplicates):
 def form_query_for_format(list_of_duplicates):
     query = "{:"
     query += str(get_max_path_len(list_of_duplicates) + 5)
-    query += "s} {:<5d} {}"
+    query += "s} {:<7s} {}"
     return query
 
 
@@ -180,7 +199,7 @@ def print_table(list_of_duplicates):
     query = form_query_for_format(list_of_duplicates)
     for elem in list_of_duplicates:
         path = elem['path']
-        size = elem['size']
+        size = bytes_to_human(elem['size'])
         colored_datetime = str(color_chooser(list_of_duplicates, elem))
         print(query.format(path, size, colored_datetime))
 
