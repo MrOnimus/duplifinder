@@ -179,6 +179,17 @@ def filter_the_dictionary(dictionary):
     return f_dictionary
 
 
+def filter_the_depth(dictionary, depth=-1):
+    df_dictionary = {}
+    if depth < 0:
+        return dictionary
+    for key in dictionary:
+        for elem in dictionary[key]:
+            if elem['path'].count('/') <= depth + 1:
+                df_dictionary = add_elem_to_dict([key, elem['path']], df_dictionary)
+    return df_dictionary
+
+
 def get_max_path_len(list_of_duplicates):
     max = 0
     for elem in list_of_duplicates:
@@ -204,8 +215,9 @@ def print_table(list_of_duplicates):
         print(query.format(path, size, colored_datetime))
 
 
-def display_result(dictionary):
+def display_result(dictionary, depth=-1):
     f_dictionary = filter_the_dictionary(dictionary)
+    f_dictionary = filter_the_depth(f_dictionary, depth)
     if len(f_dictionary) > 0:
         greetings = 'You have '
         greetings += str(len(f_dictionary))
@@ -234,7 +246,7 @@ if __name__ == "__main__":
     if len(args) > 0:
         result = get_hash_of_files_in_dir(args, 0)
         if result != -1:
-            display_result(result)
+            display_result(result, -1)
         else:
             display_error(result)
     else:
