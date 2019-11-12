@@ -4,6 +4,11 @@ import sys
 import traceback
 import platform
 from datetime import datetime
+import argparse
+import random
+
+
+__version__ = 1.0
 
 
 class Colors:
@@ -44,6 +49,7 @@ class Colors:
 
 
 symbols = ('B', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
+
 
 def bytes_to_human(n):
     n = int(n)
@@ -99,7 +105,7 @@ def add_elem_to_dict(arr, dictionary):
     return dictionary
 
 
-def get_hash_of_files_in_dir(argv, verbose=0):
+def get_hash_of_files_in_dir(argv, verbose):
     directory = str(argv[0])
     hash_table = {}
 
@@ -186,7 +192,8 @@ def filter_the_depth(dictionary, depth=-1):
     for key in dictionary:
         for elem in dictionary[key]:
             if elem['path'].count('/') <= depth + 1:
-                df_dictionary = add_elem_to_dict([key, elem['path']], df_dictionary)
+                df_dictionary = add_elem_to_dict(
+                    [key, elem['path']], df_dictionary)
     return df_dictionary
 
 
@@ -199,41 +206,97 @@ def get_max_path_len(list_of_duplicates):
     return max
 
 
-def form_query_for_format(list_of_duplicates):
+def form_query_for_format_snd(list_of_duplicates):
     query = "{:"
     query += str(get_max_path_len(list_of_duplicates) + 5)
     query += "s} {:<7s} {}"
     return query
 
 
-def print_table(list_of_duplicates):
-    query = form_query_for_format(list_of_duplicates)
-    for elem in list_of_duplicates:
-        path = elem['path']
-        size = bytes_to_human(elem['size'])
-        colored_datetime = str(color_chooser(list_of_duplicates, elem))
-        print(query.format(path, size, colored_datetime))
+def form_query_for_format_sord(list_of_duplicates):
+    query = "{:"
+    query += str(get_max_path_len(list_of_duplicates) + 5)
+    query += "s} {}"
+    return query
 
 
-def display_result(dictionary, depth=-1):
-    f_dictionary = filter_the_dictionary(dictionary)
-    f_dictionary = filter_the_depth(f_dictionary, depth)
-    if len(f_dictionary) > 0:
+def form_query_for_format(list_of_duplicates):
+    query = "{}"
+    return query
+
+
+def form_query_chooser(list_of_duplicates, args):
+    if args.size and args.datetime:
+        return form_query_for_format_snd(list_of_duplicates)
+    elif args.size or args.datetime:
+        return form_query_for_format_sord(list_of_duplicates)
+    else:
+        return form_query_for_format(list_of_duplicates)
+
+
+def form_query_executer(query, path, size, datetime):
+    if args.size and args.datetime:
+        print(query.format(path, size, datetime))
+    elif args.size:
+        print(query.format(path, size))
+    elif args.datetime:
+        print(query.format(path, datetime))
+    else:
+        print(query.format(path))
+
+
+def sort_by_datetime(list_of_duplicates):
+   if len(list_of_duplicates) <= 1:
+       return list_of_duplicates
+   else:
+       q = random.choice(list_of_duplicates)
+       s_dups = []
+       m_dups = []
+       e_dups = []
+       for elem in list_of_duplicates:
+           if elem['unixtime'] > q['unixtime']:
+               s_dups.append(elem)
+           elif elem['unixtime'] < q['unixtime']:
+               m_dups.append(elem)
+           else:
+               e_dups.append(elem)
+       return sort_by_datetime(s_dups) + e_dups + sort_by_datetime(m_dups)
+
+
+def display_results(dictionary, args):
+    if len(dictionary) > 0:
         greetings = 'You have '
-        greetings += str(len(f_dictionary))
+        greetings += str(len(dictionary))
         greetings += ' set of duplicates here:'
         print(color_print(greetings, 'underline'))
         print('')
-        for key in f_dictionary:
-            if len(f_dictionary[key]) > 1:
-                print('This files are duplicates:')
-                for elem in f_dictionary[key]:
-                    elem['unixtime'] = modification_date(elem['path'])
-                    elem['size'] = file_size(elem['path'])
-                print_table(f_dictionary[key])
-                print('')
+    for key in dictionary:
+        print('This files are duplicates: ')
+        query = form_query_chooser(dictionary[key], args)
+        if args.sort and args.datetime:
+            dictionary[key] = sort_by_datetime(dictionary[key])
+        for elem in dictionary[key]:
+            path = elem['path']
+            if args.human_readable:
+                size = bytes_to_human(elem['size'])
+            else:
+                size = str(elem['size'])
+            if args.color:
+                datetime = str(color_chooser(dictionary[key], elem))
+            else:
+                datetime = get_readable_datetime(elem['unixtime'])
+            form_query_executer(query, path, size, datetime)
+        print('')
     else:
         print('There are no duplicates.')
+
+
+def fetch_extra_data(dictionary):
+    for key in dictionary:
+        for elem in dictionary[key]:
+            elem['unixtime'] = modification_date(elem['path'])
+            elem['size'] = file_size(elem['path'])
+    return dictionary
 
 
 def display_error(result):
@@ -242,12 +305,31 @@ def display_error(result):
 
 
 if __name__ == "__main__":
-    args = sys.argv[1:]
-    if len(args) > 0:
-        result = get_hash_of_files_in_dir(args, 0)
-        if result != -1:
-            display_result(result, -1)
+    parser = argparse.ArgumentParser(
+        prog='duplifinder', usage='%(prog)s <path> [-v] [-h] [-c] [-d INT] [-s [-H]] [-V] [-t [-S]]')
+    parser.add_argument('path', type=str, help='define the directory path')
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s v' + str(__version__))
+    parser.add_argument('-c', '--color', dest='color', action='store_true',
+                        default=False, help='provides colored output')
+    parser.add_argument('-d', '--depth', type=int, default=-1,
+                        help='set depth of the search', metavar='INT')
+    parser.add_argument('-s', '--size', dest='size', action='store_true',
+                        default=False, help='provides size information')
+    parser.add_argument('-H', '--human-readable', dest='human_readable', action="store_true",
+                        default=False, help='makes size output human readable')
+    parser.add_argument('-V', '--verbose', dest='verbose',
+                        action="store_true", default=0, help='verbose output')
+    parser.add_argument('-t', '--datetime', dest='datetime', action="store_true", default=False,
+                        help='display datetime of last file modification')
+    parser.add_argument('-S', '--sort', dest='sort', action='store_true', default=False,
+                        help='sorts all files according to datetime they have been created')
+    args = parser.parse_args()
+    if args.path:
+        dictionary = get_hash_of_files_in_dir(args.path, args.verbose)
+        if dictionary != -1:
+            d_dictionary = filter_the_depth(dictionary, args.depth)
+            fd_dictionary = filter_the_dictionary(d_dictionary)
+            efd_dictionary = fetch_extra_data(fd_dictionary)
+            display_results(efd_dictionary, args)
         else:
             display_error(result)
-    else:
-        display_usage()
