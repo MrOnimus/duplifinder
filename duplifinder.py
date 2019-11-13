@@ -3,7 +3,7 @@ import sys
 import hashlib
 import traceback
 import argparse
-from helper_files import get_max_path_len, modification_date, file_size
+from helper_files import get_max_path_len
 from helper_dictionary import add_elem_to_dict, filter_the_dictionary, sort_by_datetime
 from helper_datetime import get_readable_datetime, get_max_unixtime, get_min_unixtime
 from helper_colors import color_print
@@ -11,15 +11,6 @@ from helper_print import form_query_chooser, form_query_executer
 
 
 __version__ = 1.0
-
-
-class Files:
-    """This is class containing the file information"""
-
-    def __init__(self):
-        self.path = ''
-        self.unixtime = 0
-        self.size = 0
 
 
 symbols = ('B', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
@@ -41,12 +32,12 @@ def bytes_to_human(n):
 
 
 def color_chooser(list_of_duplicates, elem):
-    datetime = get_readable_datetime(elem['unixtime'])
+    datetime = get_readable_datetime(elem.unixtime)
     if get_min_unixtime(list_of_duplicates, elem) == get_max_unixtime(list_of_duplicates, elem):
         return str(datetime)
-    if get_min_unixtime(list_of_duplicates, elem) == elem['unixtime']:
+    if get_min_unixtime(list_of_duplicates, elem) == elem.unixtime:
         return color_print(datetime, 'red')
-    elif get_max_unixtime(list_of_duplicates, elem) == elem['unixtime']:
+    elif get_max_unixtime(list_of_duplicates, elem) == elem.unixtime:
         return color_print(datetime, 'green')
     else:
         return str(datetime)
@@ -58,17 +49,17 @@ def filter_the_depth(dictionary, depth=-1):
         return dictionary
     for key in dictionary:
         for elem in dictionary[key]:
-            if elem['path'].count('/') <= depth + 1:
+            if elem.path.count('/') <= depth + 1:
                 df_dictionary = add_elem_to_dict(
-                    [key, elem['path']], df_dictionary)
+                    [key, elem.path], df_dictionary)
     return df_dictionary
 
 
 def add_extra_data(dictionary):
     for key in dictionary:
         for elem in dictionary[key]:
-            elem['unixtime'] = modification_date(elem['path'])
-            elem['size'] = file_size(elem['path'])
+            elem.modification_date()
+            elem.file_size()
     return dictionary
 
 
@@ -82,7 +73,7 @@ def get_hash_of_files_in_dir(argv, verbose):
     try:
         for root, dirs, files in os.walk(directory):
             for names in files:
-                if verbose == 1:
+                if verbose:
                     print('Hashing', names)
                 filepath = os.path.join(root, names)
                 try:
@@ -120,15 +111,15 @@ def display_results(dictionary, args):
             if args.sort and args.datetime:
                 dictionary[key] = sort_by_datetime(dictionary[key])
             for elem in dictionary[key]:
-                path = elem['path']
+                path = elem.path
                 if args.human_readable:
-                    size = bytes_to_human(elem['size'])
+                    size = bytes_to_human(elem.size)
                 else:
-                    size = str(elem['size'])
+                    size = str(elem.size)
                 if args.color:
                     datetime = color_chooser(dictionary[key], elem)
                 else:
-                    datetime = get_readable_datetime(elem['unixtime'])
+                    datetime = get_readable_datetime(elem.unixtime)
                 form_query_executer(query, path, size, datetime, args)
             print('')
     else:
