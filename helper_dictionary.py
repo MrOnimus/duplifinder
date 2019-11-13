@@ -1,15 +1,35 @@
 import random
+import platform
+import os
+
+
+class Files:
+    """This is class containing the file information"""
+
+    def __init__(self, path):
+        self.path = path
+        self.unixtime = 0
+        self.size = 0
+
+    def modification_date(self):
+        if platform.system() == 'Windows':
+            self.unixtime = os.path.getmtime(self.path)
+        else:
+            stat = os.stat(self.path)
+            self.unixtime = stat.st_mtime
+
+    def file_size(self):
+        self.size = os.path.getsize(self.path)
 
 
 def add_elem_to_dict(arr, dictionary):
     key = arr[0]
-    val = arr[1]
+    path = arr[1]
 
     if key not in dictionary:
         dictionary[key] = []
-    dictionary[key].append({
-        'path': val
-    })
+    file_info = Files(path)
+    dictionary[key].append(file_info)
     return dictionary
 
 
@@ -30,9 +50,9 @@ def sort_by_datetime(list_of_duplicates):
         m_dups = []
         e_dups = []
         for elem in list_of_duplicates:
-            if elem['unixtime'] > q['unixtime']:
+            if elem.unixtime > q.unixtime:
                 s_dups.append(elem)
-            elif elem['unixtime'] < q['unixtime']:
+            elif elem.unixtime < q.unixtime:
                 m_dups.append(elem)
             else:
                 e_dups.append(elem)
