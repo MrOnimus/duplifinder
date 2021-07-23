@@ -63,8 +63,7 @@ def add_extra_data(dictionary):
     return dictionary
 
 
-def get_hash_of_files_in_dir(argv, verbose):
-    directory = str(argv[0])
+def get_hash_of_files_in_dir(directory, verbose):
     hash_table = {}
 
     if not os.path.exists(directory):
@@ -73,9 +72,9 @@ def get_hash_of_files_in_dir(argv, verbose):
     try:
         for root, dirs, files in os.walk(directory):
             for names in files:
-                if verbose:
-                    print('Hashing', names)
                 filepath = os.path.join(root, names)
+                if verbose:
+                    print('Hashing: {0}'.format(filepath))
                 try:
                     file = open(filepath, 'rb')
                 except:
